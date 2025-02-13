@@ -15,7 +15,7 @@ const CATEGORY_EMOJI = {
 
 const log = console.log;
 
-async function main(month, { password }) {
+async function main(month, { password, budget: useBudgetedAmounts }) {
   console.debug("Getting budget for month", month);
   await api.init({
     // Budget data will be cached locally here, in subdirectories for each file.
@@ -27,6 +27,14 @@ async function main(month, { password }) {
   });
 
   const overCategorySums = new Map();
+
+  function getAmount(category) {
+    if (useBudgetedAmounts) {
+      return category.budgeted || 0;
+    } else {
+      return category.spent || 0;
+    }
+  }
 
   try {
     // This is the ID from Settings → Show advanced settings → Sync ID
@@ -53,15 +61,16 @@ async function main(month, { password }) {
         } else if (over_categories.length === 0) {
           over_category = "NONE";
         }
-        const spent = category.spent || 0;
-        if (spent !== 0) {
+        const amount = getAmount(category);
+        if (amount !== 0) {
           overCategorySums.set(
             over_category,
-            (overCategorySums.get(over_category) || 0) + spent
+            (overCategorySums.get(over_category) || 0) + amount
           );
         }
       }
     }
+    overCategorySums.delete("Work");
     // convert to percentages
     const total = overCategorySums.values().reduce((a, b) => a + b, 0);
     console.log();
@@ -104,6 +113,7 @@ program
   .argument("[month]", "Month to download", parseMonth, "current")
   .option("-p, --password <password>", "Password")
   .option("-v, --verbose", "Verbose logging")
+  .option("-b, --budget", "use budgeted amounts instead of spent", false)
   .action(async (month, options) => {
     if (!options.verbose) {
       console.debug = () => {};
