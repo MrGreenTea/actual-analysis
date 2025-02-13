@@ -9,19 +9,21 @@ const CATEGORY_EMOJI = {
   "🔴": "Need",
   "🟢": "Want",
   "💰": "Save",
-  // Hammer -> Work,
   "🔨": "Work",
 };
 
 const log = console.log;
 
-async function main(month, { password, budget: useBudgetedAmounts, budgetId }) {
+async function main(
+  month,
+  { password, budget: useBudgetedAmounts, budgetId, serverUrl: serverURL }
+) {
   console.debug("Getting budget for month", month);
   await api.init({
     // Budget data will be cached locally here, in subdirectories for each file.
     dataDir: "./.data/",
     // This is the URL of your running server
-    serverURL: "https://actual.jonasbulik.de",
+    serverURL,
     // This is the password you use to log into the server
     password,
   });
@@ -113,6 +115,7 @@ program
   .argument("[month]", "Month to download", parseMonth, "current")
   .option("-p, --password <password>", "Password")
   .option("-i, --budget-id <id>", "Budget ID")
+  .option("-s, --server-url <url>", "Server URL")
   .option("-v, --verbose", "Verbose logging")
   .option("-b, --budget", "use budgeted amounts instead of spent", false)
   .action(async (month, options) => {
