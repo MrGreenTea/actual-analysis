@@ -118,6 +118,10 @@ async function main(
   }
 }
 
+function defaultMonth() {
+  return parseMonth("last");
+}
+
 /// @param {string} str
 /// @return {string} in the format expected by `getBudgetMonth`: YYYY-MM
 function parseMonth(str) {
@@ -143,7 +147,7 @@ function parseMonth(str) {
 program
   .version("0.1.0")
   .description("Actual CLI")
-  .argument("[month]", "Month to download", parseMonth, "current")
+  .argument("[month]", "Month to download", parseMonth, defaultMonth())
   .option("-p, --password <password>", "Password")
   .option("-i, --budget-id <id>", "Budget ID")
   .option("-s, --server-url <url>", "Server URL")
