@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { program, InvalidArgumentError } from "commander";
-
+import yoctoSpinner from "yocto-spinner";
 import api from "@actual-app/api";
 
 const CATEGORY_EMOJI = {
@@ -19,6 +19,7 @@ async function main(
   { password, budget: useBudgetedAmounts, budgetId, serverUrl: serverURL }
 ) {
   console.debug("Getting budget for month", month);
+  const spinner = yoctoSpinner({ text: "Loading data" }).start();
   await api.init({
     // Budget data will be cached locally here, in subdirectories for each file.
     dataDir: "./.data/",
@@ -75,6 +76,7 @@ async function main(
     overCategorySums.delete("Work");
     // convert to percentages
     const total = overCategorySums.values().reduce((a, b) => a + b, 0);
+    spinner.success("Loaded data\n");
     console.log();
     for (const [key, value] of overCategorySums) {
       const percent = (100 * value) / total;
@@ -82,8 +84,11 @@ async function main(
     }
     console.log();
   } finally {
-    // Ensure the API client shuts down, even if an error occurred.
     await api.shutdown();
+    // in case of an error also stop the spinner
+    if (spinner.isSpinning) {
+      spinner.stop();
+    }
   }
 }
 
