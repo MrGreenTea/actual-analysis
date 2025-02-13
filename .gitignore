@@ -1,1 +1,4 @@
 node_modules/
+
+# actual budget data
+.data/
