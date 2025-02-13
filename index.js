@@ -4,6 +4,7 @@ import { program, InvalidArgumentError } from "commander";
 import yoctoSpinner from "yocto-spinner";
 import api from "@actual-app/api";
 import Table from "cli-table3";
+import chalk from "chalk";
 
 const CATEGORY_EMOJI = {
   "🟠": "Want",
@@ -78,6 +79,8 @@ async function main(
       }
     }
 
+    delete overCategorySums.NONE;
+    delete overCategorySums.Work;
     // convert to percentages
     const total = Object.values(overCategorySums).reduce((a, b) => a + b, 0);
     spinner.success("Loaded data\n");
@@ -87,19 +90,24 @@ async function main(
       colWidths: [36, 12, 12],
       colAligns: ["left", "right", "right"],
     });
+    // this makes sure we notice if they are off due to some bug in the future
+    const percents = [];
     for (const [key, value] of Object.entries(overCategorySums)) {
-      if (key === "NONE") continue;
-      if (key === "Work") continue;
-
       const percent = (100 * value) / total;
+      percents.push(percent);
 
       // value is in cents and we convert it to euros
       table.push([
-        key,
+        chalk.bold(key),
         `${(Math.abs(value) / 100).toFixed(2)} €`,
         `${percent.toFixed(2)} %`,
       ]);
     }
+    table.push([
+      chalk.bold("Total"),
+      `${(Math.abs(total) / 100).toFixed(2)} €`,
+      `${percents.reduce((a, b) => a + b, 0).toFixed(2)} %`,
+    ]);
     log(table.toString());
   } finally {
     await api.shutdown();
