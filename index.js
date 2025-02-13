@@ -15,7 +15,7 @@ const CATEGORY_EMOJI = {
 
 const log = console.log;
 
-async function main(month, { password, budget: useBudgetedAmounts }) {
+async function main(month, { password, budget: useBudgetedAmounts, budgetId }) {
   console.debug("Getting budget for month", month);
   await api.init({
     // Budget data will be cached locally here, in subdirectories for each file.
@@ -38,7 +38,7 @@ async function main(month, { password, budget: useBudgetedAmounts }) {
 
   try {
     // This is the ID from Settings → Show advanced settings → Sync ID
-    await api.downloadBudget("9b1c7ec2-96df-4403-b792-d59281a49c74");
+    await api.downloadBudget(budgetId);
 
     let budget = await api.getBudgetMonth(month);
     for (const group of budget.categoryGroups) {
@@ -112,6 +112,7 @@ program
   .description("Actual CLI")
   .argument("[month]", "Month to download", parseMonth, "current")
   .option("-p, --password <password>", "Password")
+  .option("-i, --budget-id <id>", "Budget ID")
   .option("-v, --verbose", "Verbose logging")
   .option("-b, --budget", "use budgeted amounts instead of spent", false)
   .action(async (month, options) => {
