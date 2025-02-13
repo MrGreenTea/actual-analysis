@@ -3,6 +3,7 @@
 import { program, InvalidArgumentError } from "commander";
 import yoctoSpinner from "yocto-spinner";
 import api from "@actual-app/api";
+import Table from "cli-table3";
 
 const CATEGORY_EMOJI = {
   "🟠": "Want",
@@ -29,7 +30,13 @@ async function main(
     password,
   });
 
-  const overCategorySums = new Map();
+  const overCategorySums = {
+    Want: 0,
+    Need: 0,
+    Save: 0,
+    Work: 0,
+    NONE: 0,
+  };
 
   function getAmount(category) {
     if (useBudgetedAmounts) {
@@ -66,23 +73,34 @@ async function main(
         }
         const amount = getAmount(category);
         if (amount !== 0) {
-          overCategorySums.set(
-            over_category,
-            (overCategorySums.get(over_category) || 0) + amount
-          );
+          overCategorySums[over_category] += amount;
         }
       }
     }
-    overCategorySums.delete("Work");
+
     // convert to percentages
-    const total = overCategorySums.values().reduce((a, b) => a + b, 0);
+    const total = Object.values(overCategorySums).reduce((a, b) => a + b, 0);
     spinner.success("Loaded data\n");
     console.log();
-    for (const [key, value] of overCategorySums) {
+    const table = new Table({
+      head: ["Category", "Amount", "Percentage"],
+      colWidths: [36, 12, 12],
+      colAligns: ["left", "right", "right"],
+    });
+    for (const [key, value] of Object.entries(overCategorySums)) {
+      if (key === "NONE") continue;
+      if (key === "Work") continue;
+
       const percent = (100 * value) / total;
-      log(`${key}: ${percent.toFixed(2)}%`);
+
+      // value is in cents and we convert it to euros
+      table.push([
+        key,
+        `${(Math.abs(value) / 100).toFixed(2)} €`,
+        `${percent.toFixed(2)} %`,
+      ]);
     }
-    console.log();
+    log(table.toString());
   } finally {
     await api.shutdown();
     // in case of an error also stop the spinner
